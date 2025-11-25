@@ -1,0 +1,281 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <title>Shopper App</title>
+    
+    <link rel="manifest" href="/manifest.json">
+    <link rel="apple-touch-icon" href="https://via.placeholder.com/192"> 
+
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+
+    <script src="https://unpkg.com/lucide@latest"></script>
+
+    <style>
+        /* Ajustes específicos para iOS */
+        body { 
+            -webkit-tap-highlight-color: transparent; 
+            overscroll-behavior-y: none;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+        }
+        .safe-top { padding-top: env(safe-area-inset-top); }
+        .safe-bottom { padding-bottom: env(safe-area-inset-bottom); }
+        
+        /* Ocultar barra de scroll pero permitir deslizar */
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+        
+        /* Animación Modal */
+        @keyframes slideUp {
+            from { transform: translateY(100%); }
+            to { transform: translateY(0); }
+        }
+        .modal-enter { animation: slideUp 0.3s ease-out forwards; }
+    </style>
+</head>
+<body class="bg-gray-100 text-black h-screen overflow-hidden">
+
+    <div id="root"></div>
+
+    <script type="text/babel">
+        const { useState, useEffect } = React;
+
+        // ==========================================
+        // 🛠️ TU ZONA DE EDICIÓN (EDITA AQUÍ)
+        // ==========================================
+        const DATA = {
+            header: {
+                storeName: "Meijer - Greenfield",
+                deliveryTime: "Today, 5 pm - 6 pm",
+                // Pon aquí el link a tu logo (imgur, etc)
+                logo: "https://upload.wikimedia.org/wikipedia/commons/thumb/b/b3/Meijer_logo.svg/2560px-Meijer_logo.svg.png"
+            },
+            customer: {
+                name: "Jenna D.",
+                initial: "J",
+                itemsTag: "Unique items: 50"
+            },
+            address: {
+                line1: "1234 Example St, Milwaukee, WI 53220",
+                note: "Leave at side door please"
+            },
+            products: [
+                {
+                    id: 1,
+                    category: "Baby",
+                    name: "8pc 12\"x12\" Kids' Washcloth Set Gray - Pillowfort™",
+                    desc: "8 ct",
+                    qty: "1 of 1",
+                    img: "https://target.scene7.com/is/image/Target/GUEST_a5f27806-0318-4061-9c17-19069677353f"
+                }
+            ],
+            receipt: {
+                storeLoc: "171 W. Town Square Way Oak Creek, WI 53154",
+                orderNum: "1264802808",
+                window: "08/24/2025 - 4 pm to 5 pm",
+                shopper: "Veronica Ortega Ramirez"
+            }
+        };
+
+        // ==========================================
+        // COMPONENTES DE LA APP
+        // ==========================================
+
+        const Icon = ({ name, size = 24, className = "" }) => {
+            useEffect(() => {
+                if (window.lucide) window.lucide.createIcons();
+            });
+            return <i data-lucide={name} width={size} height={size} className={className}></i>;
+        };
+
+        const App = () => {
+            const [screen, setScreen] = useState('home'); // home, items, receipt
+            const [images, setImages] = useState({});
+            const [barcode, setBarcode] = useState(null);
+
+            const handleImgUpload = (id, e) => {
+                const file = e.target.files[0];
+                if (file) setImages({...images, [id]: URL.createObjectURL(file)});
+            };
+
+            const handleBarcode = (e) => {
+                const file = e.target.files[0];
+                if (file) setBarcode(URL.createObjectURL(file));
+            };
+
+            // --- PANTALLA: ITEMS ---
+            if (screen === 'items') {
+                return (
+                    <div className="h-full bg-white flex flex-col safe-top safe-bottom">
+                        <div className="px-4 py-4 border-b flex items-center justify-between">
+                            <button onClick={() => setScreen('home')}><Icon name="x" /></button>
+                            <h1 className="font-bold text-lg">Ordered items</h1>
+                            <div className="w-6"></div>
+                        </div>
+                        <div className="flex-1 overflow-y-auto p-4">
+                            <h3 className="font-semibold border-b pb-2 mb-4">Baby</h3>
+                            {DATA.products.map(p => (
+                                <div key={p.id} className="flex gap-4 mb-6">
+                                    <div className="relative w-24 h-24 shrink-0">
+                                        <label className="block w-full h-full rounded-lg border overflow-hidden relative">
+                                            <img src={images[p.id] || p.img} className="w-full h-full object-cover" />
+                                            <input type="file" className="hidden" onChange={(e) => handleImgUpload(p.id, e)} />
+                                            {(images[p.id]) && (
+                                                <div className="absolute top-0 left-0 bg-green-600 text-white p-1 rounded-br-lg">
+                                                    <Icon name="check" size={16} />
+                                                </div>
+                                            )}
+                                        </label>
+                                    </div>
+                                    <div>
+                                        <p className="font-semibold text-sm">{p.name}</p>
+                                        <p className="text-gray-500 text-sm">{p.desc}</p>
+                                        <p className="text-gray-500 text-sm mt-1">{p.qty}</p>
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+                );
+            }
+
+            // --- PANTALLA: RECIBO ---
+            if (screen === 'receipt') {
+                return (
+                    <div className="fixed inset-0 bg-black/50 z-50 flex items-end">
+                        <div className="bg-gray-100 w-full h-[95vh] rounded-t-2xl flex flex-col modal-enter overflow-hidden safe-bottom">
+                            <div className="bg-white p-4 border-b flex justify-between items-center rounded-t-2xl">
+                                <button onClick={() => setScreen('home')}><Icon name="x" className="text-gray-500" /></button>
+                                <div className="w-12 h-1 bg-gray-300 rounded-full absolute left-1/2 -translate-x-1/2 top-3"></div>
+                                <span className="font-bold">Digital receipt</span>
+                                <div className="w-6"></div>
+                            </div>
+                            <div className="overflow-y-auto p-4 flex-1 pb-20">
+                                {/* Store */}
+                                <div className="bg-white rounded-xl p-4 mb-4 flex justify-between">
+                                    <div>
+                                        <p className="text-xs font-bold text-gray-500">STORE LOCATION</p>
+                                        <p className="font-medium">{DATA.receipt.storeLoc}</p>
+                                    </div>
+                                    <img src={DATA.header.logo} className="w-10 h-10 rounded-full border" />
+                                </div>
+                                {/* Barcode */}
+                                <div className="bg-white rounded-xl p-6 mb-4 text-center">
+                                    <p className="text-xs font-bold text-gray-500 mb-4">MEIJER ORDER #</p>
+                                    <label className="block w-full h-32 bg-gray-50 border-2 border-dashed rounded-lg mb-2 overflow-hidden flex items-center justify-center">
+                                        {barcode ? <img src={barcode} className="w-full h-full object-cover" /> : <span className="text-gray-400 text-sm">Tap to upload barcode</span>}
+                                        <input type="file" className="hidden" onChange={handleBarcode} />
+                                    </label>
+                                    <p className="text-2xl font-mono tracking-widest">{DATA.receipt.orderNum}</p>
+                                </div>
+                                {/* Info */}
+                                <div className="bg-white rounded-xl p-4 space-y-4">
+                                    <div><p className="text-xs font-bold text-gray-500">DELIVERY WINDOW</p><p>{DATA.receipt.window}</p></div>
+                                    <div><p className="text-xs font-bold text-gray-500">SHOPPER NAME</p><p>{DATA.receipt.shopper}</p></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                );
+            }
+
+            // --- PANTALLA: HOME ---
+            return (
+                <div className="h-full flex flex-col bg-gray-50 safe-top safe-bottom">
+                    {/* Header */}
+                    <div className="bg-white p-4 pt-2 border-b flex items-center justify-between sticky top-0 z-10">
+                        <Icon name="arrow-left" className="text-green-700" />
+                        <div className="text-center">
+                            <h1 className="font-bold text-sm">{DATA.header.storeName}</h1>
+                            <p className="text-xs text-gray-500">{DATA.header.deliveryTime}</p>
+                        </div>
+                        <img src={DATA.header.logo} className="w-8 h-8 rounded-full border" />
+                    </div>
+
+                    <div className="flex-1 overflow-y-auto pb-32">
+                        {/* Customer Card */}
+                        <div className="bg-white mt-4 p-4 border-y">
+                            <div className="flex justify-between mb-4">
+                                <div className="flex gap-3">
+                                    <div className="w-12 h-12 bg-gray-200 rounded-full flex items-center justify-center font-bold text-gray-600 text-xl">{DATA.customer.initial}</div>
+                                    <div>
+                                        <h2 className="font-bold text-xl">{DATA.customer.name}</h2>
+                                        <p className="text-sm text-gray-500">Head to Available Orders</p>
+                                    </div>
+                                </div>
+                                <div className="flex gap-4 text-gray-400"><Icon name="message-square" /><Icon name="phone" /></div>
+                            </div>
+                            <div className="bg-gray-50 p-3 rounded border flex justify-between items-center">
+                                <div>
+                                    <p className="font-semibold">$18.64 <span className="font-normal text-gray-500">plus $10 est tip</span></p>
+                                    <p className="text-xs text-gray-400">Estimated tip includes $10 pre-tip</p>
+                                </div>
+                                <Icon name="chevron-right" className="text-gray-300" />
+                            </div>
+                            <div className="mt-4 flex gap-2">
+                                <span className="bg-purple-100 text-purple-700 text-xs font-bold px-3 py-1 rounded-full">PREPAID</span>
+                                <span className="bg-gray-100 text-gray-600 text-xs font-bold px-3 py-1 rounded-full">DROP-OFF</span>
+                            </div>
+                        </div>
+
+                        {/* Actions */}
+                        <div className="mt-4 bg-white border-y">
+                            <div className="p-4 border-b flex gap-3">
+                                <Icon name="map-pin" className="text-gray-400 mt-1" />
+                                <div className="flex-1">
+                                    <div className="flex justify-between"><span className="font-medium">Delivery address</span><div className="flex gap-3 text-gray-400"><Icon name="copy" size={18}/><Icon name="external-link" size={18}/></div></div>
+                                    <p className="text-gray-600 mt-1">{DATA.address.line1}</p>
+                                    <p className="font-medium mt-1">"{DATA.address.note}"</p>
+                                </div>
+                            </div>
+                            <div className="p-4 border-b flex justify-between items-center">
+                                <div className="flex gap-3 items-center"><span className="text-lg">⏱</span><span className="font-medium">Time estimates</span></div>
+                                <div className="flex items-center gap-2"><span className="text-gray-500">35 min</span><Icon name="chevron-right" className="text-gray-300" /></div>
+                            </div>
+                             <div className="p-4 border-b flex justify-between items-center">
+                                <div className="flex gap-3 items-center"><span className="text-lg">📝</span><span className="font-medium">Add note</span></div>
+                                <div className="flex items-center gap-2"><span className="text-gray-400 text-sm">Save a note</span><Icon name="chevron-right" className="text-gray-300" /></div>
+                            </div>
+                        </div>
+
+                        {/* Shopping Details */}
+                        <div className="mt-6">
+                            <p className="px-4 mb-2 text-xs font-bold text-gray-500">SHOPPING DETAILS</p>
+                            <div className="bg-white border-y">
+                                <div onClick={() => setScreen('items')} className="p-4 border-b flex justify-between items-center active:bg-gray-50 cursor-pointer">
+                                    <span>Shopped items</span>
+                                    <div className="flex items-center gap-2">
+                                        <span className="bg-red-500 text-white text-xs font-bold px-2 py-0.5 rounded-full">1</span>
+                                        <Icon name="chevron-right" className="text-gray-300" />
+                                    </div>
+                                </div>
+                                <div onClick={() => setScreen('receipt')} className="p-4 flex justify-between items-center active:bg-gray-50 cursor-pointer">
+                                    <span>Digital receipt</span>
+                                    <Icon name="chevron-right" className="text-gray-300" />
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* Bottom Bar */}
+                    <div className="fixed bottom-0 w-full bg-white border-t p-4 pb-8 shadow-lg safe-bottom flex flex-col gap-3">
+                        <button className="w-full bg-[#354e43] text-white font-bold py-3 rounded-full">Send status text</button>
+                        <button className="w-full bg-[#e8f5e9] text-[#2e7d32] font-bold py-3 rounded-full">Mark as arrived</button>
+                    </div>
+                </div>
+            );
+        };
+
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(<App />);
+    </script>
+</body>
+</html>
